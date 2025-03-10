@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Video Call</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6 flex">
+    
+    <!-- Instructions Section -->
+    <div class="w-1/3 p-4 bg-white shadow-lg rounded-lg">
+        <h2 class="text-2xl font-bold mb-4 text-center">WebRTC Video Call Setup</h2>
+        
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold">Step 1: Create Offer</h3>
+            <button id="createOffer" class="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Create Offer</button>
+            <textarea id="offerBox" class="w-full p-2 border rounded mt-2" readonly></textarea>
+            <button onclick="copyToClipboard('offerBox')" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Copy</button>
+        </div>
+
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold">Step 2: Paste Offer & Generate Answer</h3>
+            <textarea id="pasteOfferBox" class="w-full p-2 border rounded" placeholder="Paste Offer Here"></textarea>
+            <button id="setRemoteOffer" class="bg-green-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Set Remote Offer</button>
+            <h3 class="text-lg font-semibold mt-4">Generated Answer</h3>
+            <textarea id="answerBox" class="w-full p-2 border rounded mt-2" readonly></textarea>
+            <button onclick="copyToClipboard('answerBox')" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Copy</button>
+        </div>
+
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold">Step 3: Paste Answer</h3>
+            <textarea id="pasteAnswerBox" class="w-full p-2 border rounded" placeholder="Paste Answer Here"></textarea>
+            <button id="setRemoteAnswer" class="bg-purple-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Set Remote Answer</button>
+        </div>
+
+        <div>
+            <h3 class="text-lg font-semibold">Step 4: Exchange ICE Candidates</h3>
+            <textarea id="iceCandidatesBox" class="w-full p-2 border rounded" readonly></textarea>
+            <button onclick="copyToClipboard('iceCandidatesBox')" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Copy ICE Candidates</button>
+            <textarea id="pasteIceCandidatesBox" class="w-full p-2 border rounded mt-2" placeholder="Paste ICE Candidates Here"></textarea>
+            <button id="addIceCandidates" class="bg-red-500 text-white px-4 py-2 rounded-lg mt-2 w-full">Add ICE Candidates</button>
+        </div>
+    </div>
+
+    <!-- Video Section -->
+    <div class="w-2/3 p-4 flex flex-col items-center">
+        <h2 class="text-xl font-semibold mb-4">Live Video Streams</h2>
+        <video id="myStream" class="w-2/3 border rounded-lg mb-4" autoplay playsinline></video>
+        <video id="remoteStream" class="w-2/3 border rounded-lg" autoplay playsinline></video>
+    </div>
+
+    <script>
+        let localStream;
+        let remoteStream;
+        let peerConnection;
+        let iceCandidates = [];
+        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+        async function startStream() {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById("myStream").srcObject = localStream;
+        }
+
+        async function createPeerConnection() {
+            peerConnection = new RTCPeerConnection(config);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            peerConnection.ontrack = event => {
+                document.getElementById("remoteStream").srcObject = event.streams[0];
+            };
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    iceCandidates.push(event.candidate);
+                    document.getElementById("iceCandidatesBox").value = JSON.stringify(iceCandidates);
+                }
+            };
+        }
+
+        async function createOffer() {
+            await createPeerConnection();
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            document.getElementById("offerBox").value = JSON.stringify(offer);
+        }
+
+        async function setRemoteOffer() {
+            await createPeerConnection();
+            const offer = JSON.parse(document.getElementById("pasteOfferBox").value);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            document.getElementById("answerBox").value = JSON.stringify(answer);
+        }
+
+        async function setRemoteAnswer() {
+            const answer = JSON.parse(document.getElementById("pasteAnswerBox").value);
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        }
+
+        async function addIceCandidates() {
+            const candidates = JSON.parse(document.getElementById("pasteIceCandidatesBox").value);
+            candidates.forEach(async candidate => {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            });
+        }
+
+        function copyToClipboard(id) {
+            let textarea = document.getElementById(id);
+            textarea.select();
+            document.execCommand("copy");
+        }
+
+        document.getElementById("createOffer").addEventListener("click", createOffer);
+        document.getElementById("setRemoteOffer").addEventListener("click", setRemoteOffer);
+        document.getElementById("setRemoteAnswer").addEventListener("click", setRemoteAnswer);
+        document.getElementById("addIceCandidates").addEventListener("click", addIceCandidates);
+        startStream();
+    </script>
+</body>
+</html>
