@@ -6,10 +6,19 @@
     <title>WebRTC Video Call</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-6 flex">
+<body class="bg-gray-100 p-6 flex flex-col md:flex-row items-center md:items-start">
     
+    <!-- Video Section -->
+    <div class="w-full md:w-2/3 p-4 flex flex-col items-center">
+        <h2 class="text-xl font-semibold mb-4 text-center">Live Video Streams</h2>
+        <div class="flex flex-col md:flex-row w-full justify-center gap-4">
+            <video id="myStream" class="w-full border rounded-lg" autoplay playsinline></video>
+            <video id="remoteStream" class="w-full border rounded-lg" autoplay playsinline></video>
+        </div>
+    </div>
+
     <!-- Instructions Section -->
-    <div class="w-1/3 p-4 bg-white shadow-lg rounded-lg">
+    <div class="w-full md:w-1/3 p-4 bg-white shadow-lg rounded-lg">
         <h2 class="text-2xl font-bold mb-4 text-center">WebRTC Video Call Setup</h2>
         
         <div class="mb-4">
@@ -43,12 +52,8 @@
         </div>
     </div>
 
-    <!-- Video Section -->
-    <div class="w-2/3 p-4 flex flex-col items-center">
-        <h2 class="text-xl font-semibold mb-4">Live Video Streams</h2>
-        <video id="myStream" class="w-2/3 border rounded-lg mb-4" autoplay playsinline></video>
-        <video id="remoteStream" class="w-2/3 border rounded-lg" autoplay playsinline></video>
-    </div>
+    <!-- Notification System -->
+    <div id="notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded shadow-lg hidden"></div>
 
     <script>
         let localStream;
@@ -57,9 +62,17 @@
         let iceCandidates = [];
         const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+        function showNotification(message) {
+            const notification = document.getElementById("notification");
+            notification.innerText = message;
+            notification.classList.remove("hidden");
+            setTimeout(() => notification.classList.add("hidden"), 3000);
+        }
+
         async function startStream() {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById("myStream").srcObject = localStream;
+            showNotification("Local stream started");
         }
 
         async function createPeerConnection() {
@@ -67,6 +80,7 @@
             localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
             peerConnection.ontrack = event => {
                 document.getElementById("remoteStream").srcObject = event.streams[0];
+                showNotification("Remote stream received");
             };
             peerConnection.onicecandidate = event => {
                 if (event.candidate) {
@@ -81,6 +95,7 @@
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
             document.getElementById("offerBox").value = JSON.stringify(offer);
+            showNotification("Offer created, copy and share");
         }
 
         async function setRemoteOffer() {
@@ -90,11 +105,13 @@
             const answer = await peerConnection.createAnswer();
             await peerConnection.setLocalDescription(answer);
             document.getElementById("answerBox").value = JSON.stringify(answer);
+            showNotification("Answer created, copy and share");
         }
 
         async function setRemoteAnswer() {
             const answer = JSON.parse(document.getElementById("pasteAnswerBox").value);
             await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+            showNotification("Answer set, connection established");
         }
 
         async function addIceCandidates() {
@@ -102,12 +119,14 @@
             candidates.forEach(async candidate => {
                 await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
             });
+            showNotification("ICE Candidates added");
         }
 
         function copyToClipboard(id) {
             let textarea = document.getElementById(id);
             textarea.select();
             document.execCommand("copy");
+            showNotification("Copied to clipboard");
         }
 
         document.getElementById("createOffer").addEventListener("click", createOffer);
