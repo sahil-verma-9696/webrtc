@@ -12,7 +12,7 @@
     <div class="w-full md:w-2/3 p-4 flex flex-col items-center">
         <h2 class="text-xl font-semibold mb-4 text-center">Live Video Streams</h2>
         <div class="flex flex-col md:flex-row w-full justify-center gap-4">
-            <video id="myStream" class="w-full border rounded-lg" autoplay playsinline></video>
+            <video id="myStream" class="w-full border rounded-lg shadow-md" autoplay playsinline></video>
             <video id="remoteStream" class="w-full border rounded-lg" autoplay playsinline></video>
         </div>
     </div>
@@ -69,7 +69,7 @@
             setTimeout(() => notification.classList.add("hidden"), 3000);
         }
 
-        async function startStream() {
+        async function startMyStream() {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById("myStream").srcObject = localStream;
             showNotification("Local stream started");
@@ -133,7 +133,7 @@
         document.getElementById("setRemoteOffer").addEventListener("click", setRemoteOffer);
         document.getElementById("setRemoteAnswer").addEventListener("click", setRemoteAnswer);
         document.getElementById("addIceCandidates").addEventListener("click", addIceCandidates);
-        startStream();
+        startMyStream();
     </script>
 </body>
 </html>
