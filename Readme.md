@@ -4,6 +4,11 @@ This guide helps **anyone** (technical or non-technical) set up a WebRTC video c
 
 ---
 
+# Snapshot
+![image](https://github.com/user-attachments/assets/e458178e-cd8e-41c8-81c2-6ee9ed8703ec)
+
+---
+
 ## 🚀 How to Use
 
 ### 1️⃣ Start Your Camera & Microphone 🎥🎤
