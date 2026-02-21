@@ -67,6 +67,11 @@ setRemoteAnswer();
 addIceCandidates();
 ```
 
+---
+
+<img width="1920" height="1200" alt="image" src="https://github.com/user-attachments/assets/2756c18b-3ec2-4276-9ea6-7f5a96047da1" />
+
+
 🔄 **This helps improve connection stability.**
 
 ---
